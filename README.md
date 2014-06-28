@@ -12,13 +12,15 @@ In the background I have the deamon process running
  > circd -n tcstewart -r TCStewart irc.mozilla.org
 
 In my .bashrc:
- > # I join channels I am interested in
+I join channels I am interested in
  > circ -c \#rust -j
- > # setup the prompt command to allow me to see the status
+
+Setup status to show with the prompt
  > PROMPT_COMMAND="circ -c \#rust -s"
  
 Then above my prompt I will see the status
- > #rust has 5 new messages
+ > rust has 5 new messages
+
  > prompt> 
  
 To send a message:
