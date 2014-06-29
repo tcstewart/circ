@@ -31,7 +31,7 @@ pub struct Message
 
 
 static EOM: &'static str = "\r\n";
-static PROGRAM: &'static str = "clirc";
+static PROGRAM: &'static str = "circ";
 
 ///////////////////////////////////////////////////////////////////////////////
 impl Message
