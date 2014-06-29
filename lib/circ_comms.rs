@@ -82,7 +82,7 @@ impl Message
 pub enum Response
 {
     Channels(Vec<String>),
-    Status(String),
+    Status(uint),
     Messages(Vec<Message>),
     Users(Vec<String>),
     Error(String)

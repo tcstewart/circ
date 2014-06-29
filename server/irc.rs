@@ -118,6 +118,8 @@ fn set_topic(channels: &mut HashMap<String, irc_channel::Channel>, msg: Message)
 fn add_message(channels: &mut HashMap<String, irc_channel::Channel>, msg: Message)
 {
     let name = msg.parameters.get(0).clone();
+    if name == "AUTH".to_string() { return (); }
+        
     channels.insert_or_update_with(name.clone(),
                                    {
                                        let mut c = irc_channel::Channel::new(name);
@@ -174,7 +176,7 @@ fn get_status(channels: &HashMap<String, irc_channel::Channel>, name: &String) -
 
     match channel
     {
-        Some(c) => circ_comms::Status(c.messages.len().to_str()),
+        Some(c) => circ_comms::Status(c.messages.len()),
         None    => circ_comms::Error(format!("Unknown channel {}", name))
     }
     
@@ -203,7 +205,7 @@ fn process_task(rx: Receiver<Message>,
                               "ERROR"   => {println!("Error... {}", msg);},
                               "PING"    => tx.send(Message::pong(&msg.trailing.unwrap())),
                               "TOPIC"   => set_topic(&mut channels, msg),
-                              "PRIVMSG" => add_message(&mut channels, msg),
+                              "PRIVMSG"|"NOTICE" => add_message(&mut channels, msg),
                               _         => () //println!("{}", msg)
                           },
                           request = request_rx.recv() =>

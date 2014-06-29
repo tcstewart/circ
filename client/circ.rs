@@ -134,8 +134,14 @@ fn main()
                 let response = circ_comms::read_response(&mut stream);
                 match response
                 {
-                    circ_comms::Status(s) => println!("{} has {} new messages",
-                                                      request.channel.unwrap(), s),
+                    circ_comms::Status(s) => 
+                        {
+                            if s > 0
+                            {
+                                println!("{} has {} new messages",
+                                         request.channel.unwrap(), s)
+                            }
+                        },
                     r => fail!("Unexpected response{}", r)
                 }
             },
