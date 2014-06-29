@@ -38,25 +38,16 @@ pub fn address() -> String
 
 ///////////////////////////////////////////////////////////////////////////////
 #[deriving(Show, Decodable, Encodable)]
-pub enum Command
+pub enum Request
 {
-    GetChannelList,
-    GetChannelStatus,
-    GetChannelMessages,
-    GetChannelUsers,
-    JoinChannel,
-    PartChannel,
-    SendMessage,
-    QuitIrc,
-}
-
-///////////////////////////////////////////////////////////////////////////////
-#[deriving(Show, Decodable, Encodable)]
-pub struct Request
-{
-    pub command: Command,
-    pub channel: Option<String>,
-    pub data: Option<String>
+    ListChannels,
+    GetStatus(String),
+    GetMessages(String),
+    GetUsers(String),
+    Join(String),
+    Part(String),
+    SendMessage(String, String),
+    Quit
 }
 
 ///////////////////////////////////////////////////////////////////////////////

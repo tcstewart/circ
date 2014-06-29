@@ -19,20 +19,30 @@ use std::io::net::tcp::TcpStream;
 use std::string::String;
 
 use circ_comms;
+use circ_comms::{Request, Response};
 use irc_channel;
 use irc_message::Message;
 
 ///////////////////////////////////////////////////////////////////////////////
-enum Request
+pub struct ConnectionConfig
 {
-    ListChannels,
-    GetStatus(String),
-    GetMessages(String),
-    GetUsers(String),
-    Join(String),
-    Part(String),
-    SendMessage(String, String),
-    Quit
+    address: String,
+    port: u16,
+    nickname: String,
+    realname: String
+}
+
+///////////////////////////////////////////////////////////////////////////////
+impl ConnectionConfig
+{
+    pub fn new(address: String, port: u16, nickname: String, realname: String)
+        -> ConnectionConfig
+    {
+        ConnectionConfig{address: address,
+                         port: port,
+                         nickname: nickname,
+                         realname: realname}
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -45,7 +55,7 @@ pub struct Connection
     realname: String,
   */  
     process_tx: Sender<Request>,
-    process_rx: Receiver<circ_comms::Response>
+    process_rx: Receiver<Response>
 
 }
 
@@ -131,7 +141,7 @@ fn add_message(channels: &mut HashMap<String, irc_channel::Channel>, msg: Messag
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-fn get_channels(channels: &HashMap<String, irc_channel::Channel>) -> circ_comms::Response
+fn get_channels(channels: &HashMap<String, irc_channel::Channel>) -> Response
 {
     let mut names : Vec<String> = Vec::new();
 
@@ -144,7 +154,7 @@ fn get_channels(channels: &HashMap<String, irc_channel::Channel>) -> circ_comms:
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-fn get_messages(channels: &mut HashMap<String, irc_channel::Channel>, name: &String) -> circ_comms::Response
+fn get_messages(channels: &mut HashMap<String, irc_channel::Channel>, name: &String) -> Response
 {
     let channel = channels.find_mut(name);
 
@@ -171,7 +181,7 @@ fn get_messages(channels: &mut HashMap<String, irc_channel::Channel>, name: &Str
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-fn get_status(channels: &HashMap<String, irc_channel::Channel>, name: &String) -> circ_comms::Response
+fn get_status(channels: &HashMap<String, irc_channel::Channel>, name: &String) -> Response
 {
     let channel = channels.find(name);
 
@@ -185,7 +195,7 @@ fn get_status(channels: &HashMap<String, irc_channel::Channel>, name: &String) -
 ///////////////////////////////////////////////////////////////////////////////
 fn process_task(rx: Receiver<Message>,
                 tx: Sender<String>,
-                response_tx: Sender<circ_comms::Response>, 
+                response_tx: Sender<Response>, 
                 request_rx: Receiver<Request>,
                 nickname: String,
                 realname: String)
@@ -212,15 +222,15 @@ fn process_task(rx: Receiver<Message>,
                           request = request_rx.recv() =>
                           match request
                           {
-                              ListChannels => response_tx.send(get_channels(&channels)),
-                              GetStatus(channel) => response_tx.send(get_status(&channels, &channel)),
-                              GetMessages(channel) =>
+                              circ_comms::ListChannels => response_tx.send(get_channels(&channels)),
+                              circ_comms::GetStatus(channel) => response_tx.send(get_status(&channels, &channel)),
+                              circ_comms::GetMessages(channel) =>
                                   response_tx.send(get_messages(&mut channels, &channel)),
-                              GetUsers(_) => response_tx.send(circ_comms::Users(Vec::new())),
-                              Join(channel) => tx.send(Message::join(&channel)),
-                              Part(channel) => tx.send(Message::part(&channel)),
-                              SendMessage(channel, msg) => tx.send(Message::msg(&channel, &msg)),
-                              Quit => {tx.send(Message::quit()); break}
+                              circ_comms::GetUsers(_) => response_tx.send(circ_comms::Users(Vec::new())),
+                              circ_comms::Join(channel) => tx.send(Message::join(&channel)),
+                              circ_comms::Part(channel) => tx.send(Message::part(&channel)),
+                              circ_comms::SendMessage(channel, msg) => tx.send(Message::msg(&channel, &msg)),
+                              circ_comms::Quit => {tx.send(Message::quit()); break}
                           });
               }
           });
@@ -230,10 +240,10 @@ fn process_task(rx: Receiver<Message>,
 impl Connection
 {
     ///////////////////////////////////////////////////////////////////////////
-    pub fn new(server: String, port: u16, nickname: String, realname: String) -> Connection
+    pub fn new(config: ConnectionConfig) -> Connection
     {
         
-        let stream = TcpStream::connect(server.as_slice(), port).unwrap();
+        let stream = TcpStream::connect(config.address.as_slice(), config.port).unwrap();
 
         // channels to handle communication with tasks servicing the irc server
         let (incoming_msg_tx, incoming_msg_rx) = channel();
@@ -247,7 +257,7 @@ impl Connection
         tx_task(outgoing_msg_rx, stream);
 
         process_task(incoming_msg_rx, outgoing_msg_tx, response_tx, request_rx,
-                     nickname.clone(), realname.clone());
+                     config.nickname.clone(), config.realname.clone());
         
         Connection{/*address: server,
                    port: port,
@@ -258,56 +268,17 @@ impl Connection
     }
 
     ///////////////////////////////////////////////////////////////////////////
-    pub fn channels(&self) -> circ_comms::Response
+    pub fn request(&self, request: Request)
     {
-        self.process_tx.send(ListChannels);
+        self.process_tx.send(request);
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
+    pub fn request_response(&self, request: Request) -> Response
+    {
+        self.process_tx.send(request);
         self.process_rx.recv()
     }
-
-
-    ///////////////////////////////////////////////////////////////////////////
-    pub fn status(&self, channel: String) -> circ_comms::Response
-    {
-        self.process_tx.send(GetStatus(channel));
-        self.process_rx.recv()
-    }
-
-    ///////////////////////////////////////////////////////////////////////////
-    pub fn unread_msgs(&self, channel: String) -> circ_comms::Response
-    {
-        self.process_tx.send(GetMessages(channel));
-        self.process_rx.recv()
-    }
-
-
-    ///////////////////////////////////////////////////////////////////////////
-    pub fn send_msg(&self, channel: String, msg: String)
-    {
-        self.process_tx.send(SendMessage(channel, msg));
-    }
-    
-    ///////////////////////////////////////////////////////////////////////////
-    pub fn join(&self, channel: String)
-    {
-        self.process_tx.send(Join(channel));
-    }
-
-    ///////////////////////////////////////////////////////////////////////////
-    pub fn part(&self, channel: String)
-    {
-        self.process_tx.send(Part(channel));
-    }
-    
-    ///////////////////////////////////////////////////////////////////////////
-    pub fn quit(&self)
-    {
-        self.process_tx.send(Quit);
-    }
-
-    ///////////////////////////////////////////////////////////////////////////
-    ///////////////////////////////////////////////////////////////////////////
-    ///////////////////////////////////////////////////////////////////////////
-    ///////////////////////////////////////////////////////////////////////////
 }    
 
     

@@ -28,7 +28,7 @@ mod irc_channel;
 mod irc_message;
 
 ///////////////////////////////////////////////////////////////////////////////
-fn process_args() -> (String, String, String, u16)
+fn process_args() -> irc::ConnectionConfig
 {
    let opts = 
         [
@@ -67,12 +67,12 @@ fn process_args() -> (String, String, String, u16)
 
     if matches.free.is_empty()
     {
-        fail!("No server specified");
+        fail!("No address specified");
     }
 
-    let server = from_str(matches.free.get(0).as_slice()).unwrap();
+    let address = from_str(matches.free.get(0).as_slice()).unwrap();
 
-    (nick, realname, server, port)
+    irc::ConnectionConfig::new(address, port, nick, realname)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -80,9 +80,9 @@ fn process_args() -> (String, String, String, u16)
 ///////////////////////////////////////////////////////////////////////////////
 fn main()
 {
-    let (nick, realname, address, port) = process_args();
+    let config = process_args();
 
-    let connection = irc::Connection::new(address, port, nick, realname);
+    let connection = irc::Connection::new(config);
 
     let socket = Path::new(circ_comms::address());
     if socket.exists()
@@ -97,20 +97,22 @@ fn main()
         let mut client = c.unwrap();
         let request = circ_comms::read_request(&mut client);
         
-        match request.command
+        match request
         {
-            circ_comms::GetChannelList => 
-                circ_comms::write_response(&mut client, connection.channels()),
-            circ_comms::GetChannelStatus => circ_comms::write_response(&mut client, connection.status(request.channel.unwrap())),
-            circ_comms::GetChannelMessages =>
+            circ_comms::ListChannels => 
                 circ_comms::write_response(&mut client,
-                                           connection.unread_msgs(request.channel.unwrap())),
-            circ_comms::GetChannelUsers => (),
-            circ_comms::JoinChannel => connection.join(request.channel.unwrap()),
-            circ_comms::PartChannel => connection.part(request.channel.unwrap()),
-            circ_comms::SendMessage => 
-                connection.send_msg(request.channel.unwrap(), request.data.unwrap()),
-            circ_comms::QuitIrc => {connection.quit(); break} // not a clean quit, but it works
+                                           connection.request_response(request)),
+            circ_comms::GetStatus(_) =>
+                circ_comms::write_response(&mut client,
+                                           connection.request_response(request)),
+            circ_comms::GetMessages(_) =>
+                circ_comms::write_response(&mut client,
+                                           connection.request_response(request)),
+            circ_comms::GetUsers(_) => (),
+            circ_comms::Join(_) => connection.request(request),
+            circ_comms::Part(_) => connection.request(request),
+            circ_comms::SendMessage(_, _) => connection.request(request),
+            circ_comms::Quit => {connection.request(request); break} // not a clean quit, but it works
         }
     }
 }

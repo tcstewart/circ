@@ -57,17 +57,6 @@ fn process_args() -> circ_comms::Request
         fail!("Must specify one of [l, j, m, p, q, s, u, w]");
     }
 
-    let command = match *flags.get(0)
-        {
-            "l" => circ_comms::GetChannelList,
-            "j" => circ_comms::JoinChannel,
-            "m" => circ_comms::SendMessage,
-            "p" => circ_comms::PartChannel,
-            "q" => circ_comms::QuitIrc,
-            "s" => circ_comms::GetChannelStatus,
-            "u" => circ_comms::GetChannelMessages,
-            x   => fail!("Unknown option {}",x )
-        };
 
     let data = if matches.free.is_empty()
                {
@@ -78,8 +67,20 @@ fn process_args() -> circ_comms::Request
                    Some(matches.free.connect(" "))
                };
        
+    let request = match *flags.get(0)
+        {
+            "l" => circ_comms::ListChannels,
+            "j" => circ_comms::Join(channel.unwrap()),
+            "m" => circ_comms::SendMessage(channel.unwrap(), data.unwrap()),
+            "p" => circ_comms::Part(channel.unwrap()),
+            "q" => circ_comms::Quit,
+            "s" => circ_comms::GetStatus(channel.unwrap()),
+            "u" => circ_comms::GetMessages(channel.unwrap()),
+            x   => fail!("Unknown option {}",x )
+        };
 
-    circ_comms::Request{command: command, channel: channel, data: data}
+    request
+//    circ_comms::Request{command: command, channel: channel, data: data}
 }
 
 fn print_msgs(msgs: &Vec<Message>)
@@ -108,9 +109,9 @@ fn main()
 
     circ_comms::write_request(&mut stream, &request);
 
-    match request.command
+    match request
     {
-        circ_comms::GetChannelList =>
+        circ_comms::ListChannels =>
             {
                 let response = circ_comms::read_response(&mut stream);
                 match response
@@ -120,7 +121,7 @@ fn main()
                     r => fail!("Unexpected response {}", r)
                 }
             },
-        circ_comms::GetChannelMessages =>
+        circ_comms::GetMessages(_) =>
             {
                 let response = circ_comms::read_response(&mut stream);
                 match response
@@ -129,7 +130,7 @@ fn main()
                     r => fail!("Unexpected response{}", r)
                 }
             },
-        circ_comms::GetChannelStatus =>
+        circ_comms::GetStatus(c) =>
             {
                 let response = circ_comms::read_response(&mut stream);
                 match response
@@ -138,8 +139,7 @@ fn main()
                         {
                             if s > 0
                             {
-                                println!("{} has {} new messages",
-                                         request.channel.unwrap(), s)
+                                println!("{} has {} new messages", c, s)
                             }
                         },
                     r => fail!("Unexpected response{}", r)
