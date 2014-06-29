@@ -118,8 +118,9 @@ fn set_topic(channels: &mut HashMap<String, irc_channel::Channel>, msg: Message)
 fn add_message(channels: &mut HashMap<String, irc_channel::Channel>, msg: Message)
 {
     let name = msg.parameters.get(0).clone();
+
     if name == "AUTH".to_string() { return (); }
-        
+
     channels.insert_or_update_with(name.clone(),
                                    {
                                        let mut c = irc_channel::Channel::new(name);
