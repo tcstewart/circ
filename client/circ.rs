@@ -34,7 +34,7 @@ fn process_args() -> circ_comms::Request
             getopts::optflag("m", "msg", "Send a message to a channel"),
             getopts::optflag("p", "part", "Part from a channel"),
             getopts::optflag("q", "quit", "Quit irc and stop circd"),
-            getopts::optflag("s", "status", "Get the status of a channel"),
+            getopts::optflag("s", "status", "Get the unread message status of all channels"),
             getopts::optflag("u", "unread", "Get the unread messages from a channel"),
             getopts::optflag("w", "who", "Get the users currently active on the channel")
         ];
@@ -74,7 +74,7 @@ fn process_args() -> circ_comms::Request
             "m" => circ_comms::SendMessage(channel.unwrap(), data.unwrap()),
             "p" => circ_comms::Part(channel.unwrap()),
             "q" => circ_comms::Quit,
-            "s" => circ_comms::GetStatus(channel.unwrap()),
+            "s" => circ_comms::GetStatus,
             "u" => circ_comms::GetMessages(channel.unwrap()),
             x   => fail!("Unknown option {}",x )
         };
@@ -130,16 +130,20 @@ fn main()
                     r => fail!("Unexpected response{}", r)
                 }
             },
-        circ_comms::GetStatus(c) =>
+        circ_comms::GetStatus =>
             {
                 let response = circ_comms::read_response(&mut stream);
                 match response
                 {
                     circ_comms::Status(s) => 
                         {
-                            if s > 0
+                            for t in s.iter()
                             {
-                                println!("{} has {} new messages", c, s)
+                                let (channel, count) = t.clone();
+                                if count > 0
+                                {
+                                    println!("{} has {} new messages", channel, count);
+                                }
                             }
                         },
                     r => fail!("Unexpected response{}", r)

@@ -197,15 +197,16 @@ fn get_messages(channels: &mut HashMap<String, irc_channel::Channel>, name: &Str
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-fn get_status(channels: &HashMap<String, irc_channel::Channel>, name: &String) -> Response
+fn get_status(channels: &HashMap<String, irc_channel::Channel>) -> Response
 {
-    let channel = channels.find(name);
+    let mut statuses: Vec<(String, uint)> = Vec::new();
 
-    match channel
+    for (name, channel) in channels.iter()
     {
-        Some(c) => circ_comms::Status(c.messages.len()),
-        None    => circ_comms::Error(format!("Unknown channel {}", name))
+        statuses.push((name.to_string(), channel.messages.len()));
     }
+    
+    circ_comms::Status(statuses)
     
 }
 ///////////////////////////////////////////////////////////////////////////////
@@ -239,7 +240,7 @@ fn process_task(rx: Receiver<Message>,
                           match request
                           {
                               circ_comms::ListChannels => response_tx.send(get_channels(&channels)),
-                              circ_comms::GetStatus(channel) => response_tx.send(get_status(&channels, &channel)),
+                              circ_comms::GetStatus => response_tx.send(get_status(&channels)),
                               circ_comms::GetMessages(channel) =>
                                   response_tx.send(get_messages(&mut channels, &channel)),
                               circ_comms::GetUsers(_) => response_tx.send(circ_comms::Users(Vec::new())),

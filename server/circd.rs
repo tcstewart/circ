@@ -102,7 +102,7 @@ fn main()
             circ_comms::ListChannels => 
                 circ_comms::write_response(&mut client,
                                            connection.request_response(request)),
-            circ_comms::GetStatus(_) =>
+            circ_comms::GetStatus =>
                 circ_comms::write_response(&mut client,
                                            connection.request_response(request)),
             circ_comms::GetMessages(_) =>

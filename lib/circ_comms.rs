@@ -41,7 +41,7 @@ pub fn address() -> String
 pub enum Request
 {
     ListChannels,
-    GetStatus(String),
+    GetStatus,
     GetMessages(String),
     GetUsers(String),
     Join(String),
@@ -73,7 +73,7 @@ impl Message
 pub enum Response
 {
     Channels(Vec<String>),
-    Status(uint),
+    Status(Vec<(String, uint)>),
     Messages(Vec<Message>),
     Users(Vec<String>),
     Error(String)
