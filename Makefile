@@ -1,4 +1,4 @@
-RUSTC ?= /opt/rust/bin/rustc
+RUSTC ?= rustc
 
 CIRC_LIB := $(shell $(RUSTC) --crate-file-name lib/circ_comms.rs --crate-type=rlib)
 
