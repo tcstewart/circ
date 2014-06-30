@@ -15,6 +15,7 @@
 
 extern crate circ_comms;
 extern crate getopts;
+extern crate term;
 extern crate time;
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -80,17 +81,26 @@ fn process_args() -> circ_comms::Request
         };
 
     request
-//    circ_comms::Request{command: command, channel: channel, data: data}
 }
 
 fn print_msgs(msgs: &Vec<Message>)
 {
+    let mut t = term::stdout().unwrap();
+
     for m in msgs.iter()
     {
-        println!("[{}] <{}> {}",
-                 time::at(m.time).strftime("%T"),
-                 m.user.as_slice().split('!').next().unwrap(),
-                 m.msg);
+        (write!(t, "[")).unwrap();
+        t.fg(term::color::MAGENTA).unwrap();
+        (write!(t, "{}", time::at(m.time).strftime("%T"))).unwrap();
+        t.reset().unwrap();
+        (write!(t, "] ")).unwrap();
+
+        t.fg(term::color::GREEN).unwrap();
+        (write!(t, "{}", m.user.as_slice().split('!').next().unwrap())).unwrap();
+
+        t.reset().unwrap();
+        (writeln!(t, " {}", m.msg)).unwrap();
+
     }
 }
 
