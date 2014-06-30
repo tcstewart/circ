@@ -62,6 +62,7 @@ pub struct Connection
 ///////////////////////////////////////////////////////////////////////////////
 fn chomp(buffer: &mut Vec<u8>)
 {
+    // TODO: remove unwrap()
     let lf = buffer.pop();
     let cr = buffer.pop();
 
@@ -114,7 +115,13 @@ fn tx_task(rx: Receiver<String>,
 fn set_topic(channels: &mut HashMap<String, irc_channel::Channel>, msg: Message)
 {
     let name = msg.parameters.get(0).clone();
-    let topic = msg.trailing.unwrap();
+
+    let topic = match msg.trailing
+        {
+            Some(t) => t,
+            None    => "No topic provided".to_string()
+        };
+
     channels.insert_or_update_with(name.clone(),
                                    {
                                        let mut c = irc_channel::Channel::new(name);
@@ -166,11 +173,20 @@ fn get_messages(channels: &mut HashMap<String, irc_channel::Channel>, name: &Str
             for m in c.messages.iter()
             {
                 // TODO: I need to understand the borrowing much better...
-                let user = m.prefix.clone();
-                let msg = m.trailing.clone();
+                let user = match m.prefix.clone()
+                    {
+                        Some(p) => p,
+                        None    => "Unknown User".to_string()
+                    };
+                let msg = match m.trailing.clone()
+                    {
+                        Some(m) => m,
+                        None    => "No message".to_string()
+                    };
+
                 r.push(circ_comms::Message::new(m.time,
-                                                user.unwrap(),
-                                                msg.unwrap()));
+                                                user,
+                                                msg));
             }
             c.clear();
             circ_comms::Messages(r)

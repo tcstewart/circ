@@ -54,7 +54,7 @@ impl Message
             Some(s) => s,
             None => fail!("No message recieved")
         };
-
+        
         let mut msg = Message::new();
 
         let mut tokens = line.split(' ');
@@ -76,6 +76,8 @@ impl Message
         for token in tokens
         {
             let (c, s) = token.slice_shift_char();
+
+            // how do I want to handle a message like this: \001ACTION is clueless\001
 
             if is_trailing
             {
