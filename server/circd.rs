@@ -14,11 +14,11 @@
 // along with circ.  If not, see <http://www.gnu.org/licenses/>.
 
 extern crate circ_comms;
-extern crate getopts;
 extern crate serialize;
 extern crate time;
 
-use std::io::fs;
+use serialize::{json, Decodable};
+use std::io::{File, fs};
 use std::io::net::unix::UnixListener;
 use std::io::{Listener, Acceptor};
 use std::os;
@@ -30,49 +30,44 @@ mod irc_message;
 ///////////////////////////////////////////////////////////////////////////////
 fn process_args() -> irc::ConnectionConfig
 {
-   let opts = 
-        [
-            getopts::reqopt("n", "nick", "Nick name", "bob"),
-            getopts::reqopt("r", "realname", "Real name", "Bob Smith"),
-            getopts::optopt("p", "port", "Port number", "6667")
-        ];
-    
-    let matches = match getopts::getopts(os::args().tail(), opts)
+    let config = match os::args().tail()
         {
-            Ok(m) => m,
-            Err(f) => fail!("Invalid options\n{}", f)
-        };
-
-    let nick = match matches.opt_str("nick")
-        {
-            Some(nick) => nick,
-            None => fail!("Invalid nick provided")
-        };
-
-    let realname = match matches.opt_str("realname")
-        {
-            Some(name) => name,
-            None => fail!("Invalid name provided")
-        };
-
-    let port = match matches.opt_str("port")
-        {
-            Some(s) => match from_str::<u16>(s.as_slice())
+            [ref arg] =>
+            {
+                let filename = Path::new(arg.as_slice());
+                
+                if !filename.exists()
                 {
-                    Some(n) => n,
-                    None => fail!("Invalid port number")
-                },
-            None => 6667
+                    fail!("File {} doesn't exist", filename.as_str().unwrap());
+                }
+
+    
+                let data = match File::open(&filename).read_to_end()
+                    {
+                        Ok(d) => d.clone(),
+                        Err(e) => fail!("Unable to read {}: {}", filename.as_str().unwrap(), e)
+                    };
+
+                let string = std::str::from_utf8(data.as_slice()).unwrap();
+                
+                let json_object = match json::from_str(string.as_slice())
+                    {
+                        Ok(s) => s,
+                        Err(e) => fail!("Unable to parse as json object: {}", e)
+                    };
+
+                let mut decoder = json::Decoder::new(json_object);
+                let config: irc::ConnectionConfig = match Decodable::decode(&mut decoder)
+                    {
+                        Ok(o)  => o,
+                        Err(e) => fail!("JSON decoding error: {}", e)
+                    };
+                config
+            },
+            _ => fail!("Configuration file must be specified")
         };
-
-    if matches.free.is_empty()
-    {
-        fail!("No address specified");
-    }
-
-    let address = from_str(matches.free.get(0).as_slice()).unwrap();
-
-    irc::ConnectionConfig::new(address, port, nick, realname)
+    
+    config
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -87,7 +82,11 @@ fn main()
     let socket = Path::new(circ_comms::address());
     if socket.exists()
     {
-        fs::unlink(&socket).unwrap();
+        match fs::unlink(&socket)
+        {
+            Ok(_)  => (),
+            Err(e) => fail!("Unable to remove {}: {}", circ_comms::address(), e)
+        }
     }
     let stream = UnixListener::bind(&socket);
     

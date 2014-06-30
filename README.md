@@ -1,3 +1,4 @@
+
 circ
 ====
 
@@ -9,25 +10,36 @@ How I use
 ====
 
 In the background I have the deamon process running
- > circd -n tcstewart -r TCStewart irc.mozilla.org
+`circd configfile`
 
+The configuration file looks like:
+```
+{
+    "address": "irc.mozilla.org",
+    "port": 6667,
+    "nickname": "nick",
+    "realname": "Real Name"
+}
+```
 In my .bashrc:
-I join channels I am interested in
- > circ -c \#rust -j
+```
+# I join channels I am interested in
+circ -c \#rust -j
 
-Setup status to show with the prompt
- > PROMPT_COMMAND="circ -c \#rust -s"
- 
+# Setup status to show with the prompt
+PROMPT_COMMAND="circ -s"
+```
 Then above my prompt I will see the status
- > rust has 5 new messages
-
- > prompt> 
+```
+rust has 5 new messages`
+ > prompt>
+```
  
 To send a message:
- > circ -c \#rust -m Can anyone explain to me about borrowing and boxes and lifetime?
+`circ -c \#rust -m Can anyone explain to me about borrowing and boxes and lifetime?`
  
 To show the unread messages:
- > circ -c \#rust -u
+`circ -c \#rust -u`
 
 
 Limitations/Future enhancements

@@ -24,6 +24,7 @@ use irc_channel;
 use irc_message::Message;
 
 ///////////////////////////////////////////////////////////////////////////////
+#[deriving(Show, Decodable)]
 pub struct ConnectionConfig
 {
     address: String,
@@ -33,30 +34,10 @@ pub struct ConnectionConfig
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-impl ConnectionConfig
-{
-    pub fn new(address: String, port: u16, nickname: String, realname: String)
-        -> ConnectionConfig
-    {
-        ConnectionConfig{address: address,
-                         port: port,
-                         nickname: nickname,
-                         realname: realname}
-    }
-}
-
-///////////////////////////////////////////////////////////////////////////////
 pub struct Connection
 {
-/*
-    address: String,
-    port: u16,
-    nickname: String,
-    realname: String,
-  */  
     process_tx: Sender<Request>,
     process_rx: Receiver<Response>
-
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -276,11 +257,7 @@ impl Connection
         process_task(incoming_msg_rx, outgoing_msg_tx, response_tx, request_rx,
                      config.nickname.clone(), config.realname.clone());
         
-        Connection{/*address: server,
-                   port: port,
-                   nickname: nickname,
-                   realname: realname,*/
-                   process_tx: request_tx,
+        Connection{process_tx: request_tx,
                    process_rx: response_rx}
     }
 

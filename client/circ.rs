@@ -87,7 +87,7 @@ fn print_msgs(msgs: &Vec<Message>)
 {
     for m in msgs.iter()
     {
-        println!("[{}] {}> {}",
+        println!("[{}] <{}> {}",
                  time::at(m.time).strftime("%T"),
                  m.user.as_slice().split('!').next().unwrap(),
                  m.msg);
