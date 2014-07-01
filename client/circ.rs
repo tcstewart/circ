@@ -25,7 +25,7 @@ use std::os;
 
 
 ///////////////////////////////////////////////////////////////////////////////
-fn process_args() -> circ_comms::Request
+fn process_args() -> (circ_comms::Request, bool)
 {
    let opts = 
         [
@@ -68,21 +68,22 @@ fn process_args() -> circ_comms::Request
                    Some(matches.free.connect(" "))
                };
        
-    let request = match *flags.get(0)
+    let (request, response_expected) = match *flags.get(0)
         {
-            "l" => circ_comms::ListChannels,
-            "j" => circ_comms::Join(channel.unwrap()),
-            "m" => circ_comms::SendMessage(channel.unwrap(), data.unwrap()),
-            "p" => circ_comms::Part(channel.unwrap()),
-            "q" => circ_comms::Quit,
-            "s" => circ_comms::GetStatus,
-            "u" => circ_comms::GetMessages(channel.unwrap()),
+            "l" => (circ_comms::ListChannels, true),
+            "j" => (circ_comms::Join(channel.unwrap()), false),
+            "m" => (circ_comms::SendMessage(channel.unwrap(), data.unwrap()), false),
+            "p" => (circ_comms::Part(channel.unwrap()), false),
+            "q" => (circ_comms::Quit, false),
+            "s" => (circ_comms::GetStatus, true),
+            "u" => (circ_comms::GetMessages(channel.unwrap()), true),
             x   => fail!("Unknown option {}",x )
         };
 
-    request
+    (request, response_expected)
 }
 
+///////////////////////////////////////////////////////////////////////////////
 fn print_msgs(msgs: &Vec<Message>)
 {
     let mut t = term::stdout().unwrap();
@@ -104,9 +105,10 @@ fn print_msgs(msgs: &Vec<Message>)
     }
 }
 
+///////////////////////////////////////////////////////////////////////////////
 fn main()
 {
-    let request = process_args();
+    let (request, response_expected) = process_args();
     
     let socket = Path::new(circ_comms::address());
 
@@ -119,50 +121,30 @@ fn main()
 
     circ_comms::write_request(&mut stream, &request);
 
-    match request
+    if response_expected
     {
-        circ_comms::ListChannels =>
+        let response = circ_comms::read_response(&mut stream);
+
+        match response
+        {
+            circ_comms::Channels(channels) => println!("{}", channels),
+            circ_comms::Messages(m) => print_msgs(&m),
+            circ_comms::Status(s) => 
             {
-                let response = circ_comms::read_response(&mut stream);
-                match response
+                for t in s.iter()
                 {
-                    circ_comms::Channels(channels) =>
-                        println!("{}", channels),
-                    r => fail!("Unexpected response {}", r)
+                    let (channel, count) = t.clone();
+                    if count == 1
+                    {
+                        println!("{} has 1 new message", channel);
+                    }
+                    else if count > 1
+                    {
+                        println!("{} has {} new messages", channel, count);
+                    }
                 }
             },
-        circ_comms::GetMessages(_) =>
-            {
-                let response = circ_comms::read_response(&mut stream);
-                match response
-                {
-                    circ_comms::Messages(m) => print_msgs(&m),
-                    r => fail!("Unexpected response{}", r)
-                }
-            },
-        circ_comms::GetStatus =>
-            {
-                let response = circ_comms::read_response(&mut stream);
-                match response
-                {
-                    circ_comms::Status(s) => 
-                        {
-                            for t in s.iter()
-                            {
-                                let (channel, count) = t.clone();
-                                if count == 1
-                                {
-                                    println!("{} has 1 new message", channel);
-                                }
-                                else if count > 1
-                                {
-                                    println!("{} has {} new messages", channel, count);
-                                }
-                            }
-                        },
-                    r => fail!("Unexpected response{}", r)
-                }
-            },
-        _ => ()
+            r => fail!("Unexpected response{}", r)
+        }
     }
 }
