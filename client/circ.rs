@@ -72,19 +72,17 @@ fn process_args() -> (circ_comms::Request, bool)
                    Some(matches.free.connect(" "))
                };
        
-    let (request, response_expected) = match *flags.get(0)
-        {
-            "l" => (circ_comms::ListChannels, true),
-            "j" => (circ_comms::Join(channel.unwrap()), false),
-            "m" => (circ_comms::SendMessage(channel.unwrap(), data.unwrap()), false),
-            "p" => (circ_comms::Part(channel.unwrap()), false),
-            "q" => (circ_comms::Quit, false),
-            "s" => (circ_comms::GetStatus, true),
-            "u" => (circ_comms::GetMessages(channel.unwrap()), true),
-            x   => fail!("Unknown option {}",x )
-        };
-
-    (request, response_expected)
+    match *flags.get(0)
+    {
+        "l" => (circ_comms::ListChannels, true),
+        "j" => (circ_comms::Join(channel.unwrap()), false),
+        "m" => (circ_comms::SendMessage(channel.unwrap(), data.unwrap()), false),
+        "p" => (circ_comms::Part(channel.unwrap()), false),
+        "q" => (circ_comms::Quit, false),
+        "s" => (circ_comms::GetStatus, true),
+        "u" => (circ_comms::GetMessages(channel.unwrap()), true),
+        x   => fail!("Unknown option {}",x )
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////
