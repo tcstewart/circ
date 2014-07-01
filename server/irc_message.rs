@@ -77,8 +77,6 @@ impl Message
         {
             let (c, s) = token.slice_shift_char();
 
-            // how do I want to handle a message like this: \001ACTION is clueless\001
-
             if is_trailing
             {
                 trailing.push_str(" ");

@@ -12,11 +12,15 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with circ.  If not, see <http://www.gnu.org/licenses/>.
+#![feature(phase)]
 
-extern crate circ_comms;
 extern crate getopts;
+extern crate regex;
+#[phase(plugin)] extern crate regex_macros;
 extern crate term;
 extern crate time;
+
+extern crate circ_comms;
 
 ///////////////////////////////////////////////////////////////////////////////
 use circ_comms::Message;
@@ -87,7 +91,9 @@ fn process_args() -> (circ_comms::Request, bool)
 fn print_msgs(msgs: &Vec<Message>)
 {
     let mut t = term::stdout().unwrap();
-
+    
+    let re = regex!(r"ACTION (?P<action>[\w\s\d]+)");
+    
     for m in msgs.iter()
     {
         (write!(t, "[")).unwrap();
@@ -96,11 +102,24 @@ fn print_msgs(msgs: &Vec<Message>)
         t.reset().unwrap();
         (write!(t, "] ")).unwrap();
 
-        t.fg(term::color::GREEN).unwrap();
-        (write!(t, "{}", m.user.as_slice().split('!').next().unwrap())).unwrap();
-
-        t.reset().unwrap();
-        (writeln!(t, " {}", m.msg)).unwrap();
+        let user = m.user.as_slice().split('!').next().unwrap();
+        
+        match re.captures(m.msg.as_slice())
+        {
+            Some(c) => 
+                {
+                    t.fg(term::color::BLUE).unwrap();
+                    (writeln!(t, "{} {}", user, c.name("action"))).unwrap();
+                    t.reset().unwrap();
+                },
+            None =>
+                {
+                    t.fg(term::color::GREEN).unwrap();
+                    (write!(t, "{}", user)).unwrap();
+                    t.reset().unwrap();
+                    (writeln!(t, "> {}", m.msg)).unwrap();
+                }
+        };
 
     }
 }

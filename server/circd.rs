@@ -41,7 +41,6 @@ fn process_args() -> irc::ConnectionConfig
                 fail!("File {} doesn't exist", filename.as_str().unwrap());
             }
             
-            
             let data = match File::open(&filename).read_to_end()
                 {
                     Ok(d) => d.clone(),
