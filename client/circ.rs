@@ -150,7 +150,11 @@ fn main()
                             for t in s.iter()
                             {
                                 let (channel, count) = t.clone();
-                                if count > 0
+                                if count == 1
+                                {
+                                    println!("{} has 1 new message", channel);
+                                }
+                                else if count > 1
                                 {
                                     println!("{} has {} new messages", channel, count);
                                 }
