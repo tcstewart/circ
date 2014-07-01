@@ -86,8 +86,17 @@ fn main()
     // TODO: need much better input validation...
     for c in stream.listen().incoming()
     {
-        let mut client = c.unwrap();
-        let request = circ_comms::read_request(&mut client);
+        let mut client = match c
+            {
+                Ok(x) => x,
+                Err(e) => { println!("Failed to get client: {}", e); continue }
+            };
+
+        let request = match circ_comms::read_request(&mut client)
+            {
+                Some(r) => r,
+                None => continue
+            };
         
         match request
         {

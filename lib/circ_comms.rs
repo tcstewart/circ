@@ -80,15 +80,13 @@ pub enum Response
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-fn decode_request(data: &str) -> Request
+fn decode_request(data: &str) -> Option<Request>
 {
-    let request: Request = match json::decode(data.as_slice())
-        {
-            Ok(o)  => o,
-            Err(e) => fail!("JSON decoding error: {}", e)
-        };
-    
-    request
+    match json::decode::<Request>(data.as_slice())
+    {
+        Ok(o)  => Some(o),
+        Err(e) => { println!("JSON decoding error: {}", e); None }
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -104,18 +102,16 @@ fn decode_response(data: &str) -> Response
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-pub fn read_request(stream: &mut UnixStream) -> Request
+pub fn read_request(stream: &mut UnixStream) -> Option<Request>
 {
     let len = stream.read_be_uint().unwrap();
     let data = stream.read_exact(len).unwrap();
 
-    let string = match ::std::str::from_utf8(data.as_slice())
-        {
-            Some(s) => s,
-            None => fail!("Unable to convert data to string")
-        };
-
-    decode_request(string)
+    match ::std::str::from_utf8(data.as_slice())
+    {
+        Some(s) => decode_request(s),
+        None => { println!("Failed to read string from data"); None }
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////
