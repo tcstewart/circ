@@ -30,37 +30,34 @@ mod irc_message;
 ///////////////////////////////////////////////////////////////////////////////
 fn process_args() -> irc::ConnectionConfig
 {
-    let config = match os::args().tail()
+    match os::args().tail()
+    {
+        [ref arg] =>
         {
-            [ref arg] =>
+            let filename = Path::new(arg.as_slice());
+            
+            if !filename.exists()
             {
-                let filename = Path::new(arg.as_slice());
-                
-                if !filename.exists()
+                fail!("File {} doesn't exist", filename.as_str().unwrap());
+            }
+            
+            
+            let data = match File::open(&filename).read_to_end()
                 {
-                    fail!("File {} doesn't exist", filename.as_str().unwrap());
-                }
-
-    
-                let data = match File::open(&filename).read_to_end()
-                    {
-                        Ok(d) => d.clone(),
-                        Err(e) => fail!("Unable to read {}: {}", filename.as_str().unwrap(), e)
-                    };
-
-                let string = std::str::from_utf8(data.as_slice()).unwrap();
-                
-                let config: irc::ConnectionConfig = match json::decode(string.as_slice())
-                    {
-                        Ok(o)  => o,
-                        Err(e) => fail!("JSON decoding error: {}", e)
-                    };
-                config
-            },
-            _ => fail!("Configuration file must be specified")
-        };
-    
-    config
+                    Ok(d) => d.clone(),
+                    Err(e) => fail!("Unable to read {}: {}", filename.as_str().unwrap(), e)
+                };
+            
+            let string = std::str::from_utf8(data.as_slice()).unwrap();
+            
+            match json::decode::<irc::ConnectionConfig>(string.as_slice())
+            {
+                Ok(o)  => o,
+                Err(e) => fail!("JSON decoding error: {}", e)
+            }
+        },
+        _ => fail!("Configuration file must be specified")
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////
