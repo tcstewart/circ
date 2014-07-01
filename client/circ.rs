@@ -92,7 +92,7 @@ fn print_msgs(msgs: &Vec<Message>)
 {
     let mut t = term::stdout().unwrap();
     
-    let re = regex!(r"ACTION (?P<action>[\w\s\d]+)");
+    let re = regex!(r"\001ACTION (?P<action>[^\001]+)\001");
     
     for m in msgs.iter()
     {
