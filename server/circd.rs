@@ -17,7 +17,7 @@ extern crate circ_comms;
 extern crate serialize;
 extern crate time;
 
-use serialize::{json, Decodable};
+use serialize::json;
 use std::io::{File, fs};
 use std::io::net::unix::UnixListener;
 use std::io::{Listener, Acceptor};
@@ -50,14 +50,7 @@ fn process_args() -> irc::ConnectionConfig
 
                 let string = std::str::from_utf8(data.as_slice()).unwrap();
                 
-                let json_object = match json::from_str(string.as_slice())
-                    {
-                        Ok(s) => s,
-                        Err(e) => fail!("Unable to parse as json object: {}", e)
-                    };
-
-                let mut decoder = json::Decoder::new(json_object);
-                let config: irc::ConnectionConfig = match Decodable::decode(&mut decoder)
+                let config: irc::ConnectionConfig = match json::decode(string.as_slice())
                     {
                         Ok(o)  => o,
                         Err(e) => fail!("JSON decoding error: {}", e)

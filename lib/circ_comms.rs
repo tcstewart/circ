@@ -21,7 +21,7 @@ extern crate serialize;
 extern crate time;
 
 ///////////////////////////////////////////////////////////////////////////////
-use serialize::{json, Encodable, Decodable};
+use serialize::json;
 use std::io::net::unix::UnixStream;
 use std::os;
 use time::Timespec;
@@ -82,9 +82,7 @@ pub enum Response
 ///////////////////////////////////////////////////////////////////////////////
 fn decode_request(data: &str) -> Request
 {
-    let json_object = json::from_str(data.as_slice());
-    let mut decoder = json::Decoder::new(json_object.unwrap());
-    let request: Request = match Decodable::decode(&mut decoder)
+    let request: Request = match json::decode(data.as_slice())
         {
             Ok(o)  => o,
             Err(e) => fail!("JSON decoding error: {}", e)
@@ -96,9 +94,7 @@ fn decode_request(data: &str) -> Request
 ///////////////////////////////////////////////////////////////////////////////
 fn decode_response(data: &str) -> Response
 {
-    let json_object = json::from_str(data.as_slice());
-    let mut decoder = json::Decoder::new(json_object.unwrap());
-    let response: Response = match Decodable::decode(&mut decoder)
+    let response: Response = match json::decode(data.as_slice())
         {
             Ok(o)  => o,
             Err(e) => fail!("JSON decoding error: {}", e)
@@ -125,7 +121,7 @@ pub fn read_request(stream: &mut UnixStream) -> Request
 ///////////////////////////////////////////////////////////////////////////////
 pub fn write_request(stream: &mut UnixStream, request: &Request)
 {
-    let string =  json::Encoder::str_encode(&request);
+    let string =  json::encode(&request);
     let data = string.as_bytes();
     
     stream.write_be_uint(data.len()).unwrap();
@@ -146,7 +142,7 @@ pub fn read_response(stream: &mut UnixStream) -> Response
 ///////////////////////////////////////////////////////////////////////////////
 pub fn write_response(stream: &mut UnixStream, response: Response)
 {
-    let string =  json::Encoder::str_encode(&response);
+    let string =  json::encode(&response);
     let data = string.as_bytes();
     
     stream.write_be_uint(data.len()).unwrap();
