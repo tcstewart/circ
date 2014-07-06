@@ -62,8 +62,14 @@ impl Channel
     pub fn add(&mut self, msg: Message)
     {
         self.messages.push(msg);
+        // also write it to a log file at this point?
     }
 
+    ///////////////////////////////////////////////////////////////////////////
+    //pub fn unread_msgs(&mut self) 
+    //pub fn recent_msgs(&mut self, seconds: u32)
+    //pub fn last_msgs(&mut self, num: u32)
+    //
     ///////////////////////////////////////////////////////////////////////////
     pub fn clear(&mut self)
     {

@@ -1,0 +1,22 @@
+[package]
+
+name = "circ" # the name of the package
+version = "0.0.1"    # the current version, obeying semver
+authors = [ "tcstewart@users.noreply.github.com" ]
+
+[[lib]]
+
+name = "circ_common"
+path = "lib/circ_comms.rs"
+crate_type = ["rlib", "staticlib"]
+
+[[bin]]
+
+name = "circ"
+path = "client/circ.rs"
+
+[[bin]]
+
+name = "circd"
+path = "server/circd.rs"
+

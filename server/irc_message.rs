@@ -52,7 +52,7 @@ impl Message
         let line = match ::std::str::from_utf8(buffer)
         {
             Some(s) => s,
-            None => fail!("No message recieved")
+            None => fail!("No message recieved: {}", buffer)
         };
         
         let mut msg = Message::new();
