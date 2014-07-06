@@ -60,8 +60,6 @@ fn process_args() -> irc::ConnectionConfig
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-
-///////////////////////////////////////////////////////////////////////////////
 fn main()
 {
     let config = process_args();
@@ -79,7 +77,6 @@ fn main()
     }
     let stream = UnixListener::bind(&socket);
     
-    // TODO: need much better input validation...
     for c in stream.listen().incoming()
     {
         let mut client = match c

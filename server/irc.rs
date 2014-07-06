@@ -105,11 +105,11 @@ fn set_topic(channels: &mut HashMap<String, irc_channel::Channel>, msg: Message)
 
     channels.insert_or_update_with(name.clone(),
                                    {
-                                       let mut c = irc_channel::Channel::new(name);
-                                       c.set_topic(topic.clone());
+                                       let mut c = irc_channel::Channel::new(name.as_slice());
+                                       c.set_topic(topic.as_slice());
                                        c
                                    },
-                                   |_, c| c.set_topic(topic.clone()));
+                                   |_, c| c.set_topic(topic.as_slice()));
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -121,7 +121,7 @@ fn add_message(channels: &mut HashMap<String, irc_channel::Channel>, msg: Messag
 
     channels.insert_or_update_with(name.clone(),
                                    {
-                                       let mut c = irc_channel::Channel::new(name);
+                                       let mut c = irc_channel::Channel::new(name.as_slice());
                                        c.add(msg.clone());
                                        c
                                    },
@@ -142,9 +142,9 @@ fn get_channels(channels: &HashMap<String, irc_channel::Channel>) -> Response
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-fn get_messages(channels: &mut HashMap<String, irc_channel::Channel>, name: &String) -> Response
+fn get_messages(channels: &mut HashMap<String, irc_channel::Channel>, name: &str) -> Response
 {
-    let channel = channels.find_mut(name);
+    let channel = channels.find_mut(&name.to_string());
 
     match channel
     {
@@ -166,8 +166,8 @@ fn get_messages(channels: &mut HashMap<String, irc_channel::Channel>, name: &Str
                     };
 
                 r.push(circ_comms::Message::new(m.time,
-                                                user,
-                                                msg));
+                                                user.as_slice(),
+                                                msg.as_slice()));
             }
             c.clear();
             circ_comms::Messages(r)
@@ -223,7 +223,7 @@ fn process_task(rx: Receiver<Message>,
                               circ_comms::ListChannels => response_tx.send(get_channels(&channels)),
                               circ_comms::GetStatus => response_tx.send(get_status(&channels)),
                               circ_comms::GetMessages(channel) =>
-                                  response_tx.send(get_messages(&mut channels, &channel)),
+                                  response_tx.send(get_messages(&mut channels, channel.as_slice())),
                               circ_comms::GetUsers(_) => response_tx.send(circ_comms::Users(Vec::new())),
                               circ_comms::Join(channel) => tx.send(Message::join(&channel)),
                               circ_comms::Part(channel) => tx.send(Message::part(&channel)),

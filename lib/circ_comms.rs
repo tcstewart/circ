@@ -62,9 +62,9 @@ pub struct Message
 ///////////////////////////////////////////////////////////////////////////////
 impl Message
 {
-    pub fn new(time: Timespec, user: String, msg: String) -> Message
+    pub fn new(time: Timespec, user: &str, msg: &str) -> Message
     {
-        Message{time: time, user: user, msg: msg}
+        Message{time: time, user: user.to_string(), msg: msg.to_string()}
     }
 }
 

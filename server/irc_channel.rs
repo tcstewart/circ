@@ -47,15 +47,15 @@ pub struct Channel
 impl Channel
 {
     ///////////////////////////////////////////////////////////////////////////
-    pub fn new(name: String) -> Channel
+    pub fn new(name: &str) -> Channel
     {
-        Channel{name: name, topic: String::new(), users: Vec::new(), messages: Vec::new()}
+        Channel{name: name.to_string(), topic: String::new(), users: Vec::new(), messages: Vec::new()}
     }
 
     ///////////////////////////////////////////////////////////////////////////
-    pub fn set_topic(&mut self, topic: String)
+    pub fn set_topic(&mut self, topic: &str)
     {
-        self.topic = topic
+        self.topic = topic.to_string();
     }
 
     ///////////////////////////////////////////////////////////////////////////
