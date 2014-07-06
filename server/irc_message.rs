@@ -100,32 +100,32 @@ impl Message
     }
 
     // Building commands to send
-    pub fn nick(nick: &String) -> String
+    pub fn nick(nick: &str) -> String
     {
         format!("NICK {}{}", nick, EOM)
     }
     
-    pub fn user(name: &String) -> String
+    pub fn user(name: &str) -> String
     {
     format!("USER {} 8 * :{}{}", PROGRAM, name, EOM)
     }
     
-    pub fn join(channel: &String) -> String
+    pub fn join(channel: &str) -> String
     {
         format!("JOIN {}{}", channel, EOM)
     }
     
-    pub fn part(channel: &String) -> String
+    pub fn part(channel: &str) -> String
     {
         format!("PART {}{}", channel, EOM)
     }
     
-    pub fn pong(data: &String) -> String
+    pub fn pong(data: &str) -> String
     {
         format!("PONG :{}{}", data, EOM)
     }
 
-    pub fn msg(dest: &String, data: &String) -> String
+    pub fn msg(dest: &str, data: &str) -> String
     {
         format!("PRIVMSG {} :{}{}", dest, data, EOM)
     }

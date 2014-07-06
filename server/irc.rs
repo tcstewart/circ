@@ -194,17 +194,11 @@ fn get_status(channels: &HashMap<String, irc_channel::Channel>) -> Response
 fn process_task(rx: Receiver<Message>,
                 tx: Sender<String>,
                 response_tx: Sender<Response>, 
-                request_rx: Receiver<Request>,
-                nickname: String,
-                realname: String)
+                request_rx: Receiver<Request>)
 {
     spawn(proc()
           {
               let mut channels = HashMap::new();
-
-              // send user information to server
-              tx.send(Message::nick(&nickname));
-              tx.send(Message::user(&realname));
 
               loop
               {
@@ -212,7 +206,7 @@ fn process_task(rx: Receiver<Message>,
                           match msg.command.as_slice()
                           {
                               "ERROR"   => {println!("Error... {}", msg);},
-                              "PING"    => tx.send(Message::pong(&msg.trailing.unwrap())),
+                              "PING"    => tx.send(Message::pong(msg.trailing.unwrap().as_slice())),
                               "TOPIC"   => set_topic(&mut channels, msg),
                               "PRIVMSG"|"NOTICE" => add_message(&mut channels, msg),
                               _         => () //println!("{}", msg)
@@ -225,9 +219,9 @@ fn process_task(rx: Receiver<Message>,
                               circ_comms::GetMessages(channel) =>
                                   response_tx.send(get_messages(&mut channels, channel.as_slice())),
                               circ_comms::GetUsers(_) => response_tx.send(circ_comms::Users(Vec::new())),
-                              circ_comms::Join(channel) => tx.send(Message::join(&channel)),
-                              circ_comms::Part(channel) => tx.send(Message::part(&channel)),
-                              circ_comms::SendMessage(channel, msg) => tx.send(Message::msg(&channel, &msg)),
+                              circ_comms::Join(channel) => tx.send(Message::join(channel.as_slice())),
+                              circ_comms::Part(channel) => tx.send(Message::part(channel.as_slice())),
+                              circ_comms::SendMessage(channel, msg) => tx.send(Message::msg(channel.as_slice(), msg.as_slice())),
                               circ_comms::Quit => {tx.send(Message::quit()); break}
                           });
               }
@@ -254,8 +248,12 @@ impl Connection
         rx_task(stream.clone(), incoming_msg_tx);
         tx_task(outgoing_msg_rx, stream);
 
-        process_task(incoming_msg_rx, outgoing_msg_tx, response_tx, request_rx,
-                     config.nickname.clone(), config.realname.clone());
+        // send user information to server
+        outgoing_msg_tx.send(Message::nick(config.nickname.as_slice()));
+        outgoing_msg_tx.send(Message::user(config.realname.as_slice()));
+
+        process_task(incoming_msg_rx, outgoing_msg_tx, response_tx, request_rx);
+        
         
         Connection{process_tx: request_tx,
                    process_rx: response_rx}
