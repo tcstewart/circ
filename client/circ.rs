@@ -55,7 +55,7 @@ fn process_args() -> (circ_comms::Request, bool)
     let v = ["l", "j", "m", "p", "q", "s", "u", "w"];
     
     let flags : Vec<&str> = v.iter().filter(|&x| matches.opt_present(*x))
-                             .map(|&x| std::str::from_utf8(x.as_bytes()).unwrap()).collect();
+                             .map(|x| x.as_slice()).collect();
 
     if flags.len() > 1 || flags.len() == 0
     {
