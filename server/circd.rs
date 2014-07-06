@@ -38,13 +38,13 @@ fn process_args() -> irc::ConnectionConfig
             
             if !filename.exists()
             {
-                fail!("File {} doesn't exist", filename.as_str().unwrap());
+                fail!("File {} doesn't exist", arg);
             }
             
             let data = match File::open(&filename).read_to_end()
                 {
                     Ok(d) => d.clone(),
-                    Err(e) => fail!("Unable to read {}: {}", filename.as_str().unwrap(), e)
+                    Err(e) => fail!("Unable to read {}: {}", arg, e)
                 };
             
             let string = std::str::from_utf8(data.as_slice()).unwrap();
@@ -75,6 +75,7 @@ fn main()
             Err(e) => fail!("Unable to remove {}: {}", circ_comms::address(), e)
         }
     }
+
     let stream = UnixListener::bind(&socket);
     
     for c in stream.listen().incoming()
