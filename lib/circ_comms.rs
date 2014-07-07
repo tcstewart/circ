@@ -1,4 +1,4 @@
-#![crate_id="circ_comms"]
+#![crate_name="circ_comms"]
 #![crate_type = "rlib"]
 
 // Copyright 2014 tcstewart

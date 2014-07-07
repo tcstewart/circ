@@ -1,6 +1,6 @@
 RUSTC ?= rustc
 
-CIRC_LIB := $(shell $(RUSTC) --crate-file-name lib/circ_comms.rs --crate-type=rlib)
+CIRC_LIB := $(shell $(RUSTC) --print-file-name lib/circ_comms.rs --crate-type=rlib)
 
 all: circ circd $(CIRC_LIB)
 
