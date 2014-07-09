@@ -14,6 +14,7 @@
 // along with circ.  If not, see <http://www.gnu.org/licenses/>.
 #![feature(phase)]
 
+extern crate collections;
 extern crate getopts;
 extern crate regex;
 #[phase(plugin)] extern crate regex_macros;
@@ -24,12 +25,13 @@ extern crate circ_comms;
 
 ///////////////////////////////////////////////////////////////////////////////
 use circ_comms::Message;
+use collections::bitv::Bitv;
 use std::io::net::unix::UnixStream;
 use std::os;
 
 
 ///////////////////////////////////////////////////////////////////////////////
-fn process_args() -> (circ_comms::Request, bool)
+fn process_args() -> (circ_comms::Request, bool, Vec<String>)
 {
    let opts = 
         [
@@ -41,7 +43,8 @@ fn process_args() -> (circ_comms::Request, bool)
             getopts::optflag("q", "quit", "Quit irc and stop circd"),
             getopts::optflag("s", "status", "Get the unread message status of all channels"),
             getopts::optflag("u", "unread", "Get the unread messages from a channel"),
-            getopts::optflag("w", "who", "Get the users currently active on the channel")
+            getopts::optflag("w", "who", "Get the users currently active on the channel"),
+            getopts::optopt("h", "highlight", "List of words that would cause the line to be highlighted", "word1[,word2...]")
         ];
     
     let matches = match getopts::getopts(os::args().tail(), opts)
@@ -62,6 +65,12 @@ fn process_args() -> (circ_comms::Request, bool)
         fail!("Must specify one of [l, j, m, p, q, s, u, w]");
     }
 
+    let highlights : Vec<String> = match matches.opt_str("highlight")
+        {
+            Some(s) => s.as_slice().split(',').map(|x| x.to_string()).collect(),
+            None => Vec::new()
+        };
+
 
     let data = if matches.free.is_empty()
                {
@@ -74,19 +83,19 @@ fn process_args() -> (circ_comms::Request, bool)
        
     match *flags.get(0)
     {
-        "l" => (circ_comms::ListChannels, true),
-        "j" => (circ_comms::Join(channel.unwrap()), false),
-        "m" => (circ_comms::SendMessage(channel.unwrap(), data.unwrap()), false),
-        "p" => (circ_comms::Part(channel.unwrap()), false),
-        "q" => (circ_comms::Quit, false),
-        "s" => (circ_comms::GetStatus, true),
-        "u" => (circ_comms::GetMessages(channel.unwrap()), true),
-        x   => fail!("Unknown option {}",x )
+        "l" => (circ_comms::ListChannels, true, highlights),
+        "j" => (circ_comms::Join(channel.unwrap()), false, highlights),
+        "m" => (circ_comms::SendMessage(channel.unwrap(), data.unwrap()), false, highlights),
+        "p" => (circ_comms::Part(channel.unwrap()), false, highlights),
+        "q" => (circ_comms::Quit, false, highlights),
+        "s" => (circ_comms::GetStatus, true, highlights),
+        "u" => (circ_comms::GetMessages(channel.unwrap()), true, highlights),
+        x   => fail!("Unknown option {}", x)
     }
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-fn print_msgs(msgs: &Vec<Message>)
+fn print_msgs(msgs: &Vec<Message>, highlights: &Vec<String>)
 {
     let mut t = term::stdout().unwrap();
     
@@ -94,6 +103,12 @@ fn print_msgs(msgs: &Vec<Message>)
     
     for m in msgs.iter()
     {
+        // TODO: There has to be a better way of doing this...
+        let vec : Vec<bool> = highlights.iter().map(|x| m.msg.as_slice().contains(x.as_slice())).collect();
+        let bvec: Bitv = vec.iter().map(|n| *n).collect();
+        
+        let highlight = bvec.any();
+
         (write!(t, "[")).unwrap();
         t.fg(term::color::MAGENTA).unwrap();
         (write!(t, "{}", time::at(m.time).strftime("%T"))).unwrap();
@@ -102,10 +117,11 @@ fn print_msgs(msgs: &Vec<Message>)
 
         let user = m.user.as_slice().split('!').next().unwrap();
         
+
         match re.captures(m.msg.as_slice())
         {
             Some(c) => 
-                {
+                { 
                     t.fg(term::color::BLUE).unwrap();
                     (writeln!(t, "{} {}", user, c.name("action"))).unwrap();
                     t.reset().unwrap();
@@ -115,7 +131,15 @@ fn print_msgs(msgs: &Vec<Message>)
                     t.fg(term::color::GREEN).unwrap();
                     (write!(t, "{}", user)).unwrap();
                     t.reset().unwrap();
-                    (writeln!(t, "> {}", m.msg)).unwrap();
+                    (write!(t, "> ")).unwrap();
+                    if highlight
+                    {
+                        t.bg(term::color::BLUE).unwrap();
+                    }
+                    (write!(t, "{}", m.msg)).unwrap();
+                    t.reset().unwrap();
+                    (writeln!(t, "")).unwrap();
+                    
                 }
         };
 
@@ -125,7 +149,7 @@ fn print_msgs(msgs: &Vec<Message>)
 ///////////////////////////////////////////////////////////////////////////////
 fn main()
 {
-    let (request, response_expected) = process_args();
+    let (request, response_expected, highlights) = process_args();
     
     let socket = Path::new(circ_comms::address());
 
@@ -145,7 +169,7 @@ fn main()
         match response
         {
             circ_comms::Channels(channels) => println!("{}", channels),
-            circ_comms::Messages(m) => print_msgs(&m),
+            circ_comms::Messages(m) => print_msgs(&m, &highlights),
             circ_comms::Status(s) => 
             {
                 for t in s.iter()
