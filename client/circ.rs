@@ -81,7 +81,7 @@ fn process_args() -> (circ_comms::Request, bool, Vec<String>)
                    Some(matches.free.connect(" "))
                };
        
-    match *flags.get(0)
+    match flags[0]
     {
         "l" => (circ_comms::ListChannels, true, highlights),
         "j" => (circ_comms::Join(channel.unwrap()), false, highlights),
