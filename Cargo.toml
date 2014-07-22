@@ -6,9 +6,9 @@ authors = [ "tcstewart@users.noreply.github.com" ]
 
 [[lib]]
 
-name = "circ_common"
+name = "circ_comms"
 path = "lib/circ_comms.rs"
-crate_type = ["rlib", "staticlib"]
+crate_type = ["rlib"]
 
 [[bin]]
 
