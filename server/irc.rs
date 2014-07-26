@@ -73,7 +73,11 @@ fn rx_task(stream: TcpStream,
                   
                   let msg = Message::parse(buffer.as_slice());
                   
-                  tx.send(msg);
+                  match msg
+                  {
+                      Ok(m) => tx.send(m),
+                      Err(e) => println!("{}: {}", e, buffer)
+                  };
               }
           });
 }

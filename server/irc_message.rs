@@ -47,12 +47,12 @@ impl Message
     }
 
     ///////////////////////////////////////////////////////////////////////////
-    pub fn parse(buffer: &[u8]) -> Message
+    pub fn parse(buffer: &[u8]) -> Result<Message, &'static str>
     {
         let line = match ::std::str::from_utf8(buffer)
         {
             Some(s) => s,
-            None => fail!("No message recieved: {}", buffer)
+            None => return Err("Failed to parse")
         };
         
         let mut msg = Message::new();
@@ -96,7 +96,7 @@ impl Message
         
         if is_trailing {msg.trailing = Some(trailing);}
         
-        msg 
+        Ok(msg) 
     }
 
     // Building commands to send
