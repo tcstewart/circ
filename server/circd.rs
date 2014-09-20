@@ -19,9 +19,10 @@ extern crate time;
 
 use serialize::json;
 use std::io::{File, fs};
-use std::io::net::unix::UnixListener;
+use std::io::net::pipe::UnixListener;
 use std::io::{Listener, Acceptor};
 use std::os;
+use std::io::fs::PathExtensions;
 
 mod irc;
 mod irc_channel;

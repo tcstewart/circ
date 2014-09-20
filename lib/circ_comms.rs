@@ -22,7 +22,7 @@ extern crate time;
 
 ///////////////////////////////////////////////////////////////////////////////
 use serialize::json;
-use std::io::net::unix::UnixStream;
+use std::io::net::pipe::UnixStream;
 use std::os;
 use time::Timespec;
 

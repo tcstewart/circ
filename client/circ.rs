@@ -26,9 +26,9 @@ extern crate circ_comms;
 ///////////////////////////////////////////////////////////////////////////////
 use circ_comms::Message;
 use collections::bitv::Bitv;
-use std::io::net::unix::UnixStream;
+use std::io::net::pipe::UnixStream;
 use std::os;
-
+use std::io::fs::PathExtensions;
 
 ///////////////////////////////////////////////////////////////////////////////
 fn process_args() -> (circ_comms::Request, bool, Vec<String>)
