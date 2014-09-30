@@ -14,6 +14,7 @@
 // along with circ.  If not, see <http://www.gnu.org/licenses/>.
 
 use std::collections::HashMap;
+use std::collections::hashmap::{Occupied,Vacant};
 use std::io::BufferedStream;
 use std::io::net::tcp::TcpStream;
 use std::string::String;
@@ -95,43 +96,43 @@ fn tx_task(rx: Receiver<String>,
               }
           });
 }
-
 ///////////////////////////////////////////////////////////////////////////////
 fn set_topic(channels: &mut HashMap<String, irc_channel::Channel>, msg: Message)
 {
     let name = msg.parameters[0].clone();
-
     let topic = match msg.trailing
         {
             Some(t) => t,
             None    => "No topic provided".to_string()
         };
-
-    channels.insert_or_update_with(name.clone(),
-                                   {
-                                       let mut c = irc_channel::Channel::new(name.as_slice());
-                                       c.set_topic(topic.as_slice());
-                                       c
-                                   },
-                                   |_, c| c.set_topic(topic.as_slice()));
+    match channels.entry(name.clone())
+    {
+        Vacant(entry) =>
+        {
+            let mut c = irc_channel::Channel::new(name.as_slice());
+            c.set_topic(topic.as_slice());
+            entry.set(c);
+        },
+        Occupied(mut entry) => entry.get_mut().set_topic(topic.as_slice())
+    };
 }
-
 ///////////////////////////////////////////////////////////////////////////////
 fn add_message(channels: &mut HashMap<String, irc_channel::Channel>, msg: Message)
 {
     let name = msg.parameters[0].clone();
-
     if name == "AUTH".to_string() { return (); }
-
-    channels.insert_or_update_with(name.clone(),
-                                   {
-                                       let mut c = irc_channel::Channel::new(name.as_slice());
-                                       c.add(msg.clone());
-                                       c
-                                   },
-                                   |_, c| c.add(msg.clone()));
+    match channels.entry(name.clone())
+    {
+        Vacant(entry) =>
+        {
+            let mut c = irc_channel::Channel::new(name.as_slice());
+            c.add(msg.clone());
+            entry.set(c);
+        },
+        Occupied(mut entry) => entry.get_mut().add(msg.clone())
+    };
 }
-
+ 
 ///////////////////////////////////////////////////////////////////////////////
 fn get_channels(channels: &HashMap<String, irc_channel::Channel>) -> Response
 {
