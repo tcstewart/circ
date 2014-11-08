@@ -14,7 +14,7 @@
 // along with circ.  If not, see <http://www.gnu.org/licenses/>.
 
 use std::collections::HashMap;
-use std::collections::hashmap::{Occupied,Vacant};
+use std::collections::hash_map::{Occupied,Vacant};
 use std::io::BufferedStream;
 use std::io::net::tcp::TcpStream;
 use std::string::String;
@@ -51,7 +51,7 @@ fn chomp(buffer: &mut Vec<u8>)
     if lf.unwrap() != '\n' as u8 && cr.unwrap() != '\r' as u8
     {
         println!("{}{}", cr, lf);
-        fail!("Failed to find \\r\\n");
+        panic!("Failed to find \\r\\n");
     }
 }
 
@@ -117,7 +117,8 @@ fn set_topic(channels: &mut HashMap<String, irc_channel::Channel>, msg: Message)
     };
 }
 ///////////////////////////////////////////////////////////////////////////////
-fn add_message(channels: &mut HashMap<String, irc_channel::Channel>, msg: Message)
+fn add_message(channels: &mut HashMap<String, irc_channel::Channel>,
+               msg: Message)
 {
     let name = msg.parameters[0].clone();
     if name == "AUTH".to_string() { return (); }
@@ -147,9 +148,10 @@ fn get_channels(channels: &HashMap<String, irc_channel::Channel>) -> Response
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-fn get_messages(channels: &mut HashMap<String, irc_channel::Channel>, name: &str) -> Response
+fn get_messages(channels: &mut HashMap<String, irc_channel::Channel>,
+                name: &str) -> Response
 {
-    let channel = channels.find_mut(&name.to_string());
+    let channel = channels.get_mut(&name.to_string());
 
     match channel
     {
@@ -240,7 +242,7 @@ impl Connection
     pub fn new(config: ConnectionConfig) -> Connection
     {
         
-        let stream = TcpStream::connect(config.address.as_slice(), config.port).unwrap();
+        let stream = TcpStream::connect((config.address.as_slice(), config.port)).unwrap();
 
         // channels to handle communication with tasks servicing the irc server
         let (incoming_msg_tx, incoming_msg_rx) = channel();

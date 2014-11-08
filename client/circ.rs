@@ -50,7 +50,7 @@ fn process_args() -> (circ_comms::Request, bool, Vec<String>)
     let matches = match getopts::getopts(os::args().tail(), opts)
         {
             Ok(m) => m,
-            Err(e) => fail!("Invalid options\n{}", e)
+            Err(e) => panic!("Invalid options\n{}", e)
         };
 
     let channel = matches.opt_str("channel");
@@ -62,7 +62,7 @@ fn process_args() -> (circ_comms::Request, bool, Vec<String>)
 
     if flags.len() > 1 || flags.len() == 0
     {
-        fail!("Must specify one of [l, j, m, p, q, s, u, w]");
+        panic!("Must specify one of [l, j, m, p, q, s, u, w]");
     }
 
     let highlights : Vec<String> = match matches.opt_str("highlight")
@@ -90,7 +90,7 @@ fn process_args() -> (circ_comms::Request, bool, Vec<String>)
         "q" => (circ_comms::Quit, false, highlights),
         "s" => (circ_comms::GetStatus, true, highlights),
         "u" => (circ_comms::GetMessages(channel.unwrap()), true, highlights),
-        x   => fail!("Unknown option {}", x)
+        x   => panic!("Unknown option {}", x)
     }
 }
 
@@ -155,7 +155,7 @@ fn main()
 
     if socket.exists().not()
     {
-        fail!("Socket {} doesn't exist", circ_comms::address());
+        panic!("Socket {} doesn't exist", circ_comms::address());
     }
 
     let mut stream = UnixStream::connect(&socket).unwrap();
@@ -185,7 +185,7 @@ fn main()
                     }
                 }
             },
-            r => fail!("Unexpected response{}", r)
+            r => panic!("Unexpected response{}", r)
         }
     }
 }

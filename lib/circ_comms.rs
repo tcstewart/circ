@@ -95,7 +95,7 @@ fn decode_response(data: &str) -> Response
     let response: Response = match json::decode(data.as_slice())
         {
             Ok(o)  => o,
-            Err(e) => fail!("JSON decoding error: {}", e)
+            Err(e) => panic!("JSON decoding error: {}", e)
         };
     
     response

@@ -39,13 +39,13 @@ fn process_args() -> irc::ConnectionConfig
             
             if !filename.exists()
             {
-                fail!("File {} doesn't exist", arg);
+                panic!("File {} doesn't exist", arg);
             }
             
             let data = match File::open(&filename).read_to_end()
                 {
                     Ok(d) => d.clone(),
-                    Err(e) => fail!("Unable to read {}: {}", arg, e)
+                    Err(e) => panic!("Unable to read {}: {}", arg, e)
                 };
             
             let string = std::str::from_utf8(data.as_slice()).unwrap();
@@ -53,10 +53,10 @@ fn process_args() -> irc::ConnectionConfig
             match json::decode::<irc::ConnectionConfig>(string.as_slice())
             {
                 Ok(o)  => o,
-                Err(e) => fail!("JSON decoding error: {}", e)
+                Err(e) => panic!("JSON decoding error: {}", e)
             }
         },
-        _ => fail!("Configuration file must be specified")
+        _ => panic!("Configuration file must be specified")
     }
 }
 
@@ -73,7 +73,7 @@ fn main()
         match fs::unlink(&socket)
         {
             Ok(_)  => (),
-            Err(e) => fail!("Unable to remove {}: {}", circ_comms::address(), e)
+            Err(e) => panic!("Unable to remove {}: {}", circ_comms::address(), e)
         }
     }
 
