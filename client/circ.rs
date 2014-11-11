@@ -111,7 +111,7 @@ fn print_msgs(msgs: &Vec<Message>, highlights: &Vec<String>)
 
         (write!(t, "[")).unwrap();
         t.fg(term::color::MAGENTA).unwrap();
-        (write!(t, "{}", time::at(m.time).strftime("%T"))).unwrap();
+        (write!(t, "{}", time::at(m.time).strftime("%T").unwrap())).unwrap();
         t.reset().unwrap();
         (write!(t, "] ")).unwrap();
 
