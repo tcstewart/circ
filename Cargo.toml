@@ -4,6 +4,9 @@ name = "circ" # the name of the package
 version = "0.0.1"    # the current version, obeying semver
 authors = [ "tcstewart@users.noreply.github.com" ]
 
+[dependencies]
+time = "*"
+
 [lib]
 name = "circ_comms"
 path = "lib/circ_comms.rs"

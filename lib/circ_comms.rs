@@ -1,5 +1,5 @@
 #![crate_name="circ_comms"]
-#![crate_type = "rlib"]
+#![crate_type = "dylib"]
 
 // Copyright 2014 tcstewart
 // This file is part of circ.

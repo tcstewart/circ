@@ -95,20 +95,20 @@ fn main()
         
         match request
         {
-            circ_comms::ListChannels => 
+            circ_comms::Request::ListChannels => 
                 circ_comms::write_response(&mut client,
                                            connection.request_response(request)),
-            circ_comms::GetStatus =>
+            circ_comms::Request::GetStatus =>
                 circ_comms::write_response(&mut client,
                                            connection.request_response(request)),
-            circ_comms::GetMessages(_) =>
+            circ_comms::Request::GetMessages(_) =>
                 circ_comms::write_response(&mut client,
                                            connection.request_response(request)),
-            circ_comms::GetUsers(_) => (),
-            circ_comms::Join(_) => connection.request(request),
-            circ_comms::Part(_) => connection.request(request),
-            circ_comms::SendMessage(_, _) => connection.request(request),
-            circ_comms::Quit => {connection.request(request); break} // not a clean quit, but it works
+            circ_comms::Request::GetUsers(_) => (),
+            circ_comms::Request::Join(_) => connection.request(request),
+            circ_comms::Request::Part(_) => connection.request(request),
+            circ_comms::Request::SendMessage(_, _) => connection.request(request),
+            circ_comms::Request::Quit => {connection.request(request); break} // not a clean quit, but it works
         }
     }
 }

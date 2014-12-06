@@ -61,9 +61,9 @@ impl Message
         
         let mut token = tokens.next().unwrap();
         
-        let (c, s) = token.slice_shift_char();
+        let (c, s) = token.slice_shift_char().unwrap();
         
-        if c == Some(':')
+        if c == ':'
         {
             msg.prefix = Some(from_str(s).unwrap());
             token = tokens.next().unwrap();
@@ -75,14 +75,14 @@ impl Message
         let mut is_trailing = false;
         for token in tokens
         {
-            let (c, s) = token.slice_shift_char();
+            let (c, s) = token.slice_shift_char().unwrap();
 
             if is_trailing
             {
                 trailing.push_str(" ");
                 trailing.push_str(token);
             }
-            else if c == Some(':')
+            else if c == ':'
             {
                 trailing.push_str(s);
                 

@@ -33,8 +33,8 @@ use std::io::fs::PathExtensions;
 ///////////////////////////////////////////////////////////////////////////////
 fn process_args() -> (circ_comms::Request, bool, Vec<String>)
 {
-   let opts = 
-        [
+   let opts : &[getopts::OptGroup] = 
+        &[
             getopts::optflag("l", "list-channels", "List the channels that circd is using"),
             getopts::optopt("c", "channel", "Channel to use for the operations", "#rust"),
             getopts::optflag("j", "join", "Join a channel"),
@@ -83,13 +83,13 @@ fn process_args() -> (circ_comms::Request, bool, Vec<String>)
        
     match flags[0]
     {
-        "l" => (circ_comms::ListChannels, true, highlights),
-        "j" => (circ_comms::Join(channel.unwrap()), false, highlights),
-        "m" => (circ_comms::SendMessage(channel.unwrap(), data.unwrap()), false, highlights),
-        "p" => (circ_comms::Part(channel.unwrap()), false, highlights),
-        "q" => (circ_comms::Quit, false, highlights),
-        "s" => (circ_comms::GetStatus, true, highlights),
-        "u" => (circ_comms::GetMessages(channel.unwrap()), true, highlights),
+        "l" => (circ_comms::Request::ListChannels, true, highlights),
+        "j" => (circ_comms::Request::Join(channel.unwrap()), false, highlights),
+        "m" => (circ_comms::Request::SendMessage(channel.unwrap(), data.unwrap()), false, highlights),
+        "p" => (circ_comms::Request::Part(channel.unwrap()), false, highlights),
+        "q" => (circ_comms::Request::Quit, false, highlights),
+        "s" => (circ_comms::Request::GetStatus, true, highlights),
+        "u" => (circ_comms::Request::GetMessages(channel.unwrap()), true, highlights),
         x   => panic!("Unknown option {}", x)
     }
 }
@@ -168,9 +168,9 @@ fn main()
 
         match response
         {
-            circ_comms::Channels(channels) => println!("{}", channels),
-            circ_comms::Messages(m) => print_msgs(&m, &highlights),
-            circ_comms::Status(s) => 
+            circ_comms::Response::Channels(channels) => println!("{}", channels),
+            circ_comms::Response::Messages(m) => print_msgs(&m, &highlights),
+            circ_comms::Response::Status(s) => 
             {
                 for t in s.iter()
                 {

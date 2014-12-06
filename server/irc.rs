@@ -144,7 +144,7 @@ fn get_channels(channels: &HashMap<String, irc_channel::Channel>) -> Response
         names.push(name.clone());
     }
 
-    circ_comms::Channels(names)
+    circ_comms::Response::Channels(names)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -177,9 +177,9 @@ fn get_messages(channels: &mut HashMap<String, irc_channel::Channel>,
                                                 msg.as_slice()));
             }
             c.clear();
-            circ_comms::Messages(r)
+            circ_comms::Response::Messages(r)
         },
-        None    => circ_comms::Error(format!("Unknown channel {}", name))
+        None    => circ_comms::Response::Error(format!("Unknown channel {}", name))
     }
     
 }
@@ -194,7 +194,7 @@ fn get_status(channels: &HashMap<String, irc_channel::Channel>) -> Response
         statuses.push((name.to_string(), channel.messages.len()));
     }
     
-    circ_comms::Status(statuses)
+    circ_comms::Response::Status(statuses)
     
 }
 ///////////////////////////////////////////////////////////////////////////////
@@ -221,15 +221,15 @@ fn process_task(rx: Receiver<Message>,
                           request = request_rx.recv() =>
                           match request
                           {
-                              circ_comms::ListChannels => response_tx.send(get_channels(&channels)),
-                              circ_comms::GetStatus => response_tx.send(get_status(&channels)),
-                              circ_comms::GetMessages(channel) =>
+                              circ_comms::Request::ListChannels => response_tx.send(get_channels(&channels)),
+                              circ_comms::Request::GetStatus => response_tx.send(get_status(&channels)),
+                              circ_comms::Request::GetMessages(channel) =>
                                   response_tx.send(get_messages(&mut channels, channel.as_slice())),
-                              circ_comms::GetUsers(_) => response_tx.send(circ_comms::Users(Vec::new())),
-                              circ_comms::Join(channel) => tx.send(Message::join(channel.as_slice())),
-                              circ_comms::Part(channel) => tx.send(Message::part(channel.as_slice())),
-                              circ_comms::SendMessage(channel, msg) => tx.send(Message::msg(channel.as_slice(), msg.as_slice())),
-                              circ_comms::Quit => {tx.send(Message::quit()); break}
+                              circ_comms::Request::GetUsers(_) => response_tx.send(circ_comms::Response::Users(Vec::new())),
+                              circ_comms::Request::Join(channel) => tx.send(Message::join(channel.as_slice())),
+                              circ_comms::Request::Part(channel) => tx.send(Message::part(channel.as_slice())),
+                              circ_comms::Request::SendMessage(channel, msg) => tx.send(Message::msg(channel.as_slice(), msg.as_slice())),
+                              circ_comms::Request::Quit => {tx.send(Message::quit()); break}
                           });
               }
           });
