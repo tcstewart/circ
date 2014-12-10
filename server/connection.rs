@@ -47,19 +47,9 @@ fn rx_task(server: Arc<NetIrcServer>,
 {
     spawn(proc()
           {
-
               for message in server.iter()
               {
-                  
                   tx.send((time::get_time(), message));
-
-                  //let msg = Message::parse(message.into_string());
-                  
-                  //match msg
-                  //{
-                  //    Ok(m) => tx.send(m),
-                  //    Err(e) => println!("{}: {}", e, buffer)
-                  //};
               }
           });
 }
@@ -73,6 +63,7 @@ fn set_topic(channels: &mut HashMap<String, irc_channel::Channel>, msg: Message)
            Some(t) => t,
            None    => "No topic provided".to_string()
        };
+
     match channels.entry(name.clone())
     {
         Vacant(entry) =>
@@ -88,9 +79,9 @@ fn set_topic(channels: &mut HashMap<String, irc_channel::Channel>, msg: Message)
 fn add_message(channels: &mut HashMap<String, irc_channel::Channel>,
                msg: (Timespec, Message))
 {
-    //let (t, m) = msg;
     let name = msg.1.args[0].clone();
     if name == "AUTH".to_string() { return (); }
+
     match channels.entry(name.clone())
     {
         Vacant(entry) =>
@@ -188,6 +179,7 @@ fn process_task(rx: Receiver<(Timespec, Message)>,
                               "PRIVMSG"|"NOTICE" => add_message(&mut channels, (time, msg)),
                               _         => () //println!("{}", msg)
                           },
+
                           request = request_rx.recv() =>
                           match request
                           {
@@ -206,7 +198,8 @@ fn process_task(rx: Receiver<(Timespec, Message)>,
                                   server.send(PART(channel.as_slice(), None)).unwrap(),
                               circ_comms::Request::SendMessage(channel, msg) =>
                                   server.send(PRIVMSG(channel.as_slice(), msg.as_slice())).unwrap(),
-                              circ_comms::Request::Quit => {server.send(QUIT(None)).unwrap(); break}
+                              circ_comms::Request::Quit =>
+                                  { server.send(QUIT(None)).unwrap(); break }
                           });
               }
           });
@@ -220,7 +213,8 @@ impl Connection
     {
         let irc_server = Arc::new(IrcServer::from_config(config).unwrap());
 
-        // channels to handle communication with tasks servicing the irc server
+        // channel to handle communication with task receiving messages
+        // from the irc server
         let (incoming_msg_tx, incoming_msg_rx) = channel();
 
         // duplex to handle communication with process task
