@@ -15,16 +15,16 @@ In the background I have the deamon process running
 The configuration file looks like:
 ```
 {
-    "address": "irc.mozilla.org",
-    "port": 6667,
+    "server": "irc.mozilla.org",
+    "port": 6697,
     "nickname": "nick",
-    "realname": "Real Name"
+    "realname": "Real Name",
+    "use_ssl": true,
+    "channels" : ["#rust"]
 }
 ```
 In my .bashrc:
 ```
-# I join channels I am interested in
-circ -c \#rust -j
 
 # Setup status to show with the prompt
 PROMPT_COMMAND="circ -s"
@@ -40,6 +40,8 @@ To send a message:
  
 To show the unread messages:
 `circ -c \#rust -u`
+
+![](https://raw.githubusercontent.com/tcstewart/circ/master/images/screenshot.png)
 
 
 Limitations/Future enhancements
