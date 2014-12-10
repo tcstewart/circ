@@ -7,18 +7,20 @@ authors = [ "tcstewart@users.noreply.github.com" ]
 [dependencies]
 time = "*"
 
+[dependencies.irc]
+version = "~0.5.0"
+features = ["ssl"]
+
+
 [lib]
 name = "circ_comms"
 path = "lib/circ_comms.rs"
 crate_type = ["rlib"]
 
 [[bin]]
-
 name = "circ"
 path = "client/circ.rs"
 
 [[bin]]
-
 name = "circd"
 path = "server/circd.rs"
-

@@ -1,3 +1,4 @@
+#![feature(slicing_syntax)]
 // Copyright 2014 tcstewart
 // This file is part of circ.
 // circ is free software: you can redistribute it and/or modify
@@ -14,22 +15,22 @@
 // along with circ.  If not, see <http://www.gnu.org/licenses/>.
 
 extern crate circ_comms;
-extern crate serialize;
+extern crate irc;
 extern crate time;
 
-use serialize::json;
-use std::io::{File, fs};
+use irc::data::config::Config;
+
+use std::io::fs;
 use std::io::net::pipe::UnixListener;
 use std::io::{Listener, Acceptor};
 use std::os;
 use std::io::fs::PathExtensions;
 
-mod irc;
+mod connection;
 mod irc_channel;
-mod irc_message;
 
 ///////////////////////////////////////////////////////////////////////////////
-fn process_args() -> irc::ConnectionConfig
+fn process_args() -> Config
 {
     match os::args().tail()
     {
@@ -41,20 +42,8 @@ fn process_args() -> irc::ConnectionConfig
             {
                 panic!("File {} doesn't exist", arg);
             }
-            
-            let data = match File::open(&filename).read_to_end()
-                {
-                    Ok(d) => d.clone(),
-                    Err(e) => panic!("Unable to read {}: {}", arg, e)
-                };
-            
-            let string = std::str::from_utf8(data.as_slice()).unwrap();
-            
-            match json::decode::<irc::ConnectionConfig>(string.as_slice())
-            {
-                Ok(o)  => o,
-                Err(e) => panic!("JSON decoding error: {}", e)
-            }
+
+            Config::load(filename).unwrap()
         },
         _ => panic!("Configuration file must be specified")
     }
@@ -65,8 +54,8 @@ fn main()
 {
     let config = process_args();
 
-    let connection = irc::Connection::new(config);
-
+    let connection = connection::Connection::new(config);
+    
     let socket = Path::new(circ_comms::address());
     if socket.exists()
     {
@@ -82,16 +71,16 @@ fn main()
     for c in stream.listen().incoming()
     {
         let mut client = match c
-            {
-                Ok(x) => x,
-                Err(e) => { println!("Failed to get client: {}", e); continue }
-            };
+        {
+            Ok(x) => x,
+            Err(e) => { println!("Failed to get client: {}", e); continue }
+        };
 
         let request = match circ_comms::read_request(&mut client)
-            {
-                Some(r) => r,
-                None => continue
-            };
+        {
+            Some(r) => r,
+            None => continue
+        };
         
         match request
         {

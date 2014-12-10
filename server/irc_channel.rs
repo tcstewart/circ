@@ -13,7 +13,9 @@
 // You should have received a copy of the GNU General Public License
 // along with circ.  If not, see <http://www.gnu.org/licenses/>.
 
-use irc_message::Message;
+use time::Timespec;
+
+use irc::data::message::Message;
 
 ///////////////////////////////////////////////////////////////////////////////
 #[deriving(Show)]
@@ -40,7 +42,7 @@ pub struct Channel
     pub name: String,
     pub topic: String,
     pub users: Vec<User>,
-    pub messages: Vec<Message>
+    pub messages: Vec<(Timespec, Message)>
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -59,7 +61,7 @@ impl Channel
     }
 
     ///////////////////////////////////////////////////////////////////////////
-    pub fn add(&mut self, msg: Message)
+    pub fn add(&mut self, msg: (Timespec, Message))
     {
         self.messages.push(msg);
         // also write it to a log file at this point?
