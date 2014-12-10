@@ -82,6 +82,59 @@ fn process_args() -> (circ_comms::Request, bool, Vec<String>)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
+fn line_wrap(t: &mut Box<term::Terminal<term::WriterWrapper> + Send>, string: &str, indent: uint)
+{
+    let width = match os::getenv("COLUMNS")
+        {
+            Some(val) => from_str::<uint>(val.as_slice()).unwrap() - indent,
+            None      => std::uint::MAX
+        };
+
+    if width > string.len()
+    {
+         (writeln!(t, "{}", string)).unwrap();
+    }
+    else
+    {
+        let mut start = 0;
+
+        while start < string.len()
+        {
+            if start != 0
+            {
+                for _ in range(0, indent)
+                {
+                    (write!(t, " ")).unwrap();
+                }
+            }
+            let mut end = start + width;
+
+            if end >= string.len()
+            {
+                end = string.len()
+            }
+            else
+            {
+                // Find a decent end to the string
+                while string.char_at(end) != ' ' && end > start
+                {
+                    end -= 1;
+                }
+                
+                if end == start
+                {
+                    // can't split in a nice spot.
+                    end = start + width;
+                }
+            }
+
+            (writeln!(t, "{}", string.slice(start, end))).unwrap();
+
+            start = end + 1;
+        }
+    }
+}
+///////////////////////////////////////////////////////////////////////////////
 fn print_msgs(msgs: &Vec<Message>, highlights: &Vec<String>)
 {
     let mut t = term::stdout().unwrap();
@@ -110,22 +163,23 @@ fn print_msgs(msgs: &Vec<Message>, highlights: &Vec<String>)
             Some(c) => 
                 { 
                     t.fg(term::color::BLUE).unwrap();
-                    (writeln!(t, "{} {}", user, c.name("action"))).unwrap();
+                    (writeln!(t, "{: >12} ", user)).unwrap();
+                    line_wrap(&mut t, c.name("action").as_slice(), 241);
                     t.reset().unwrap();
                 },
             None =>
                 {
                     t.fg(term::color::GREEN).unwrap();
-                    (write!(t, "{}", user)).unwrap();
+                    (write!(t, "{: >12}", user)).unwrap();
                     t.reset().unwrap();
                     (write!(t, "> ")).unwrap();
                     if highlight
                     {
                         t.bg(term::color::BLUE).unwrap();
                     }
-                    (write!(t, "{}", m.msg)).unwrap();
+                    line_wrap(&mut t, m.msg.as_slice(), 25);
                     t.reset().unwrap();
-                    (writeln!(t, "")).unwrap();
+                    //(writeln!(t, "")).unwrap();
                     
                 }
         };
