@@ -163,7 +163,7 @@ fn print_msgs(msgs: &Vec<Message>, highlights: &Vec<String>)
             Some(c) => 
                 { 
                     t.fg(term::color::BLUE).unwrap();
-                    (writeln!(t, "{: >12} ", user)).unwrap();
+                    (write!(t, "{: >12} ", user)).unwrap();
                     line_wrap(&mut t, c.name("action").as_slice(), 241);
                     t.reset().unwrap();
                 },
