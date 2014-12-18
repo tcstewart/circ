@@ -31,10 +31,11 @@ pub struct Connection
 fn rx_task(server: Arc<NetIrcServer>,
            tx: Sender<(Timespec, Message)>)
 {
-    spawn(proc()
+    spawn(move ||
           {
               for message in server.iter()
               {
+                  println!("{}", message.into_string());
                   tx.send((time::get_time(), message));
               }
           });
@@ -149,7 +150,7 @@ fn process_task(rx: Receiver<(Timespec, Message)>,
                 response_tx: Sender<Response>, 
                 request_rx: Receiver<Request>)
 {
-    spawn(proc()
+    spawn(move ||
           {
               let mut channels = HashMap::new();
               let server = Wrapper::new(&*tx);
