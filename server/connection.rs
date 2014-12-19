@@ -35,7 +35,7 @@ fn rx_task(server: Arc<NetIrcServer>,
           {
               for message in server.iter()
               {
-                  println!("{}", message.into_string());
+                  debug!("{}", message.into_string());
                   tx.send((time::get_time(), message));
               }
           });
